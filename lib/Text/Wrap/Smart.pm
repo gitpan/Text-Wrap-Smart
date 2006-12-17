@@ -8,7 +8,7 @@ use Math::BigFloat;
 
 our ($VERSION, @EXPORT_OK);
 
-$VERSION = '0.1';
+$VERSION = '0.2';
 @EXPORT_OK = qw(wrap_smart);
 
 sub wrap_smart {
@@ -16,24 +16,44 @@ sub wrap_smart {
     die "No text defined!\n" unless $text;
 
     my $msg_size = $conf->{max_msg_size} || 160;
-    my ($i, $length_eval);
-
-    my $length = length($text);
-    $length_eval = $length;
-
-    do {
-        $length_eval -= $msg_size;
-        $i++;
-    } while ($length_eval > 0);
-
-    my $x = Math::BigFloat->new($length / $i);
-    my $average = $x->bceil();
-
+    my $no_split = $conf->{no_split};
     my @strings;
 
-    for ($i = 0; $i < $length; $i += $average) {
-        my $string = substr($text, $i, $average);
-        push @strings, $string;
+    if (!$no_split) {
+        my ($i, $length_eval);
+
+        my $length = length($text);
+        $length_eval = $length;
+
+        do {
+            $length_eval -= $msg_size;
+            $i++;
+        } while ($length_eval > 0);
+
+        my $x = Math::BigFloat->new($length / $i);
+        my $average = $x->bceil();
+
+        for ($i = 0; $i < $length; $i += $average) {
+            my $string = substr($text, $i, $average);
+            push @strings, $string;
+        }
+    } else {
+        my $start = 0;
+        while ($start < (length($text)-1)) {
+            my $pos = rindex($text, ' ', $msg_size);
+            $pos = length($text) if $pos == -1;
+            my $str = substr($text, $start, $pos);
+            my $pos_size = $start+$pos+1;
+            my $length = 0;
+            if ($pos_size > length($text)) {
+                $pos_size = length($text);
+                $length = 0;
+            } else {
+                $length = length($text) - $pos_size;
+            }
+            $start += $pos_size; 
+            push @strings, $str;
+       }
     }
 
     return @strings;
@@ -53,8 +73,9 @@ Text::Wrap::Smart - Wrap text into chunks of equal length
  $text = .. # random content & length
  
  %options = (
+             no_split => 1,
              max_msg_size => 160,
-	    );
+            );
 
  @chunks = wrap_smart($text, \%options);
 
@@ -68,7 +89,11 @@ C<wrap_smart()> may nevertheless be used for other purposes.
 
 =head2 wrap_smart
 
-See section synopsis.
+ @chunks = wrap_smart($text, \%options);
+
+C<%options> may contain the C<no_split> option indicating that
+words shall not be broken up. C<max_msg_size> sets the character
+length boundary for each chunk emitted.
 
 =head1 SEE ALSO
 
@@ -83,6 +108,6 @@ Steven Schubiger <schubiger@cpan.org>
 This program is free software; you may redistribute it and/or 
 modify it under the same terms as Perl itself.
 
-See L<http://www.perl.com/perl/misc/Artistic.html>	    
+See L<http://www.perl.com/perl/misc/Artistic.html>
 
 =cut
