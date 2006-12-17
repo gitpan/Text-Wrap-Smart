@@ -1,6 +1,6 @@
 ---
 name: Text-Wrap-Smart
-version: 0.2
+version: 0.3
 author:
   - 'Steven Schubiger <schubiger@cpan.org>'
 abstract: Wrap text into chunks of equal length
@@ -19,6 +19,6 @@ meta-spec:
 provides:
   Text::Wrap::Smart:
     file: lib/Text/Wrap/Smart.pm
-    version: 0.2
+    version: 0.3
 resources:
   license: http://dev.perl.org/licenses/

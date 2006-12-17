@@ -2,15 +2,15 @@
 
 use strict;
 use warnings;
-         
+
 use Text::Wrap::Smart qw(wrap_smart);
 
-my $text = 'abcdefghijklmnopqrstuvwxyz ' x 25;
+my $text = 'abcdefghijklmnopqrstuvwxyz ' x 15;
 
 my %options = (
                max_msg_size => 160,
-	       no_split => 1,
-	      );
+               no_split => 1,
+              );
 
 my @messages = wrap_smart($text, \%options);
 

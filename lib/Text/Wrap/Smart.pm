@@ -8,7 +8,7 @@ use Math::BigFloat;
 
 our ($VERSION, @EXPORT_OK);
 
-$VERSION = '0.2';
+$VERSION = '0.3';
 @EXPORT_OK = qw(wrap_smart);
 
 sub wrap_smart {
@@ -19,43 +19,56 @@ sub wrap_smart {
     my $no_split = $conf->{no_split};
     my @strings;
 
-    if (!$no_split) {
-        my ($i, $length_eval);
+    my ($i, $length_eval);
 
-        my $length = length($text);
-        $length_eval = $length;
+    my $length = length($text);
+    $length_eval = $length;
 
-        do {
-            $length_eval -= $msg_size;
-            $i++;
-        } while ($length_eval > 0);
+    do {
+        $length_eval -= $msg_size;
+        $i++;
+    } while ($length_eval > 0);
 
-        my $x = Math::BigFloat->new($length / $i);
-        my $average = $x->bceil();
+    my $x = Math::BigFloat->new($length / $i);
+    my $average = $x->bceil();
 
+    unless ($no_split) {
         for ($i = 0; $i < $length; $i += $average) {
             my $string = substr($text, $i, $average);
             push @strings, $string;
         }
     } else {
+        my ($have_space, $pos);
         my $start = 0;
+        my $text_eval = $text;
+
         while ($start < (length($text)-1)) {
-            my $pos = rindex($text, ' ', $msg_size);
-            $pos = length($text) if $pos == -1;
-            my $str = substr($text, $start, $pos);
-            my $pos_size = $start+$pos+1;
+            if (length($text_eval) > $average && $text_eval =~ / /) {
+                $pos = rindex($text_eval, ' ', $average);
+                $have_space = 1;
+            } else {
+                $pos = $have_space ? length($text_eval) : $msg_size;
+            }
+
+            $pos = length($text_eval) if $pos == -1;
+            my $str = substr($text_eval, 0, $pos);
+            $pos++;
             my $length = 0;
-            if ($pos_size > length($text)) {
-                $pos_size = length($text);
+
+            if ($pos > length($text_eval)) {
+                $pos = length($text_eval);
                 $length = 0;
             } else {
-                $length = length($text) - $pos_size;
+                $length = length($text_eval) - $pos;
             }
-            $start += $pos_size; 
+
+            $text_eval = substr($text_eval, $pos, $length);
+            $start += $pos;
+
+            $/ = ' '; chomp($str);
             push @strings, $str;
        }
     }
-
     return @strings;
 }
 
